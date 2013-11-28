@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.6
+#!/usr/bin/env python
 
 import os
 import subprocess
@@ -22,8 +22,10 @@ def WriteToFile(File, Msg):
 	File.flush()
 
 
-def WriteCompilationMessages():
-	subprocess.call(["swipl", "-g", "[test],halt."])
+def WriteCompilationMessages(output):
+	subprocess.call(["swipl", "-g", "[test],halt."],
+	                stdout = output,
+	                stderr = output)
 
 
 def Add(lista):
@@ -85,7 +87,7 @@ def WriteToTmp(tmp):
 	punctaj_maxim = Add(punctaje)
 	dots = "." * 30 + "\n"
 
-	string = "Initial Global Time: " + str(global_t) + " s" + "\n"
+	string = "Initial Global Time: " + str(global_t) + "\n"
 	WriteToFile(tmp, "\n" + dots + string)
 
 	# test details
@@ -104,7 +106,7 @@ def WriteToTmp(tmp):
 			WriteToFile(tmp, string)
 			break
 		else:
-			string = "{0:<10} ...: {1:>6.3f} s\n".format("GlobalTime", global_t)
+			string = "{0:<10} ...: {1:>6.3f}\n".format("GlobalTime", global_t)
 			WriteToFile(tmp, string)
 
 		if runtime == -1:
@@ -123,26 +125,30 @@ def WriteToTmp(tmp):
 	WriteToFile(tmp, "\n" + dots + summary + passed + points + dots)
 
 
-def FilterTmpWriteToOutput(tmp):
-	'''Filter the output, based on the tmp file'''
+def FilterTmpWriteToOutput(tmp, output):
+	'''Create results.txt, based on the tmp file'''
 
 	tmp.seek(0, os.SEEK_SET)
 
 	for line in tmp:
 		if line.find('%') != 0:
-			sys.stdout.write(line)
+			WriteToFile(output, line)
 
 
 if __name__ == '__main__':
-	'''stdout contains the output of all 
-	tests and also the compilation message'''
+	'''Create results.txt, which contains the output 
+	of all tests and also the compilation message'''
+
+	output_name = 'results.txt'
+	output = OpenFile(output_name)
 
 	tmp_name = 'tmp.txt'
 	tmp = OpenFile(tmp_name)
 
-	WriteCompilationMessages()
+	WriteCompilationMessages(output)
 	WriteToTmp(tmp)
-	FilterTmpWriteToOutput(tmp)
+	FilterTmpWriteToOutput(tmp, output)
 
 	tmp.close()
 	cleanup(tmp_name)
+	output.close()
